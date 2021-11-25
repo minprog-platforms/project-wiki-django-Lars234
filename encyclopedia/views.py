@@ -14,3 +14,8 @@ def entry(request, entry_name):
         "name": entry_name,
         "content": markdown2.markdown(util.get_entry(entry_name))   
     })
+
+def new_page(request):
+    return render(request, "encyclopedia/new_page.html", {
+        "entries": util.list_entries()
+    })

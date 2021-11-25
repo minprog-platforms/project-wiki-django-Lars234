@@ -1,0 +1,33 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    New page
+{% endblock %}
+
+{% block body %}
+    <h1>Create a new page</h1>
+
+    <form action="">
+        {% csrf_token %}
+        What is the title for the new page?
+        <p>
+            <input type="text", name="title">
+        </p>
+        Enter the content in markdown here:
+        <p>
+            <textarea name="content"></textarea>
+        </p>
+        <input type="submit", value="Add page">
+    </form>
+    
+    <ul>
+        {% for entry in entries %}
+            <li>
+                <a href="wiki/{{ entry }}">
+                    {{ entry }}
+                </a>
+            </li>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
