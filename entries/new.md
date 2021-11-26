@@ -1,7 +1,0 @@
-# page
-
-## markup
-
-### markdown
-
-tets
