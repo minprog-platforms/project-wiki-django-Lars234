@@ -30,6 +30,27 @@ def entry(request, entry_name):
         "random": random.choice(util.list_entries())   
     })
 
+def search(request, query=""):
+    # searching is possible via: 
+    # http//.../search/query
+    # search bar
+
+    # if posted, update the query with the form
+    if request.method == "POST":
+        query = request.POST.get("q")
+
+    # if the query matches a page, go there:
+    if query in util.list_entries():
+        return HttpResponseRedirect(f"/wiki/{query}")
+
+    # if it does not match, show a possible list
+    else:
+        return render(request, "encyclopedia/search.html", {
+            "query": query,
+            "entries": util.list_entries(),
+            "random": random.choice(util.list_entries())
+        })
+
 def new_page(request):
     if request.method == "POST":
         new_title_form = NewPageForm(request.POST)
