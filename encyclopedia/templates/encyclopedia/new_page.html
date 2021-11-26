@@ -7,7 +7,7 @@
 {% block body %}
     <h1>Create a new page</h1>
 
-    <form action="">
+    <form action="{% url 'new_page' %}", method="post">
         {% csrf_token %}
         What is the title for the new page?
         <p>
@@ -19,15 +19,5 @@
         </p>
         <input type="submit", value="Add page">
     </form>
-    
-    <ul>
-        {% for entry in entries %}
-            <li>
-                <a href="wiki/{{ entry }}">
-                    {{ entry }}
-                </a>
-            </li>
-        {% endfor %}
-    </ul>
 
 {% endblock %}
