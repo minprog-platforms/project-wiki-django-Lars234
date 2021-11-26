@@ -1,0 +1,21 @@
+{% extends "encyclopedia/layout.html" %}
+
+{% block title %}
+    Edit: {{ name }}
+{% endblock %}
+
+{% block body %}
+    <h1>Edit {{ name }}</h1>
+
+    <form action="/wiki/{{ name }}/edit", method="post">
+        {% csrf_token %}
+        Enter the content in markdown here:
+        <p>
+            <textarea name="content">
+                {{ content }}
+            </textarea>
+        </p>
+        <input type="submit", value="Save page">
+    </form>
+
+{% endblock %}
