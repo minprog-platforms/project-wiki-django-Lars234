@@ -5,7 +5,6 @@ from django import forms
 
 from . import util
 import random
-import re
 
 
 def index(request):
@@ -39,10 +38,12 @@ def edit(request, entry_name):
         file.write(new_content)
 
         return HttpResponseRedirect(f"/wiki/{entry_name}")
+    
+    file = open(f"entries/{entry_name}.md").read()
 
     return render(request, "encyclopedia/edit.html", {
         "name": entry_name,
-        "content": md_to_html(entry_name),
+        "content": file,
         "random": random.choice(util.list_entries())
         })
 
@@ -111,44 +112,74 @@ def is_unique_title(name):
 
 def md_to_html(file):
     with open(f"entries/{file}.md", "r") as md_file:
-        html = ""
-        for line in md_file.readlines():
+        html = []
+        sentences = md_file.read().split("\n")
+        print(sentences)
+        
+        for line in sentences:
+            # first check for an empty line
+            if not line:
+                continue
+
             # check for special chars and count them:
             header = line.count("#")
             line = line.replace("#", "")
+            is_list = False
 
             new_line = ""
 
             # add a header at the front
             if header > 0:
                 new_line += f"<h{header}>"
+            # if it is a list
+            elif "* " in line[0:1]:
+                is_list = True
+                new_line += "<li>"
+                line = line.replace("* ", "")
+            else:
+                new_line += "<p>"
             
             # search for links
-            try:
-                link_text = re.search(r".*?\[(.*)].*", line).group(1)
-                link_path = re.search(r"(.*?)", line).group(1)
-                print(link_path)
-                print(link_text)
-            except Exception:
-                pass
+            while "[" in line and "]" in line and "(" in line and ")" in line:
+                link_name = line.split("[", 1)[1].split("]", 1)[0]
+                link_path = line.split("(", 1)[1].split(")", 1)[0]
+                
+                # add this link
+                line = line.split("[", 1)
+                line[1] = line[1].split(")", 1)[1]
+                line = f"<a href={link_path}>{link_name}</a>".join(line) 
 
-            for link in re.findall(r'(?<=\[).*?(?=\])', line):
-                print(link)
-            
+            # get boldfaces
+            while "**" in line:
+                try:
+                    bold_line = line.split("**", 2)
+                    line = f"{bold_line[0]}<b>{bold_line[1]}</b>{bold_line[2]}" 
+                except Exception:
+                    break           
             
             new_line += line
 
             # add a header at the back
             if header > 0:
                 new_line += f"</h{header}>"
+            elif is_list:
+                new_line += "</li>"
+            else:
+                new_line += f"</p>"
             
-            html += new_line + "\n"
-        
-    return html
+            html.append(new_line)
+    
+    output = "".join(html)
+
+    # if there are list items, put <ul> around it
+    if "<li>" in output:
+        start = output.split("<li>", 1)[0]
+        middle = output.split("<li>", 1)[1].rsplit("</li>", 1)[0]
+        end = output.split("<li>", 1)[1].rsplit("</li>", 1)[1]
+
+        output = f"{start}<ul><li>{middle}</li></ul>{end}"    
+
+    return output
 
 class NewPageForm(forms.Form):
     name = forms.CharField()
-                
-
-
-print(md_to_html("Python"))
