@@ -1,8 +1,6 @@
-from logging import exception
-from django.core import validators
+from django.core.exceptions import ValidationError
 from django.http.response import HttpResponseRedirect
 from django.shortcuts import render
-from django.core.validators import RegexValidator
 from django import forms
 
 from . import util
@@ -71,16 +69,23 @@ def search(request, query=""):
 
 def new_page(request):
     if request.method == "POST":
-        new_title_form = NewPageForm(request.POST)
-        unique_title = RegexValidator("".join(util.list_entries()), "The title must be unique", inverse_match=False)
-        print("".join(util.list_entries()))
-        if new_title_form.is_valid():
-            new_title = new_title_form.cleaned_data["name"]
-        else:
-            # if client side validation failed, go to error page
-            return HttpResponseRedirect("/error")
 
-        new_content = request.POST.get('content')
+        try:
+            new_content = request.POST.get('content')
+            new_title = request.POST.get("name")
+        except Exception:
+            new_content =  ""
+            new_title = ""
+ 
+        # check if the title is unique and not ""
+        if new_title in util.list_entries() and new_title:
+            return render(request, "encyclopedia/new_page.html", {
+                "entries": util.list_entries(),
+                "random": random.choice(util.list_entries()),
+                "form": NewPageForm(),
+                "content": new_content,
+                "error": True
+            })   
 
         # make a new md file
         new = open(f"entries/{new_title}.md", "w")
@@ -88,20 +93,21 @@ def new_page(request):
 
         return HttpResponseRedirect(f"/wiki/{new_title}")
 
+    # is run if method is get
     return render(request, "encyclopedia/new_page.html", {
         "entries": util.list_entries(),
         "random": random.choice(util.list_entries()),
-        "form": NewPageForm()
+        "form": NewPageForm(),
+        "content": "",
+        "error": False
     })
 
-unique_title = RegexValidator("".join(util.list_entries()), "The title must be unique", inverse_match=False)
-
-
-
-class NewPageForm(forms.Form):
-    #not_allowed = "".join(util.list_entries())
-    #name = forms.RegexField(not_allowed, validators=[unique_title], required=True)
-    name = forms.CharField(required=True, validators=[unique_title])
+def is_unique_title(name):
+    if name in "".join(util.list_entries()):
+        raise ValidationError(
+            ('%(new_title)s is not an even number'),
+            params={'name': name},
+        )
 
 def md_to_html(file):
     with open(f"entries/{file}.md", "r") as md_file:
@@ -140,7 +146,8 @@ def md_to_html(file):
         
     return html
 
-
+class NewPageForm(forms.Form):
+    name = forms.CharField()
                 
 
 

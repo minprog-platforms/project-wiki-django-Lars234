@@ -10,12 +10,20 @@
     <form action="{% url 'new_page' %}", method="post">
         {% csrf_token %}
         What is the title for the new page?
+        {% if error %}
+            <p style="color: red">ERROR: choose a unique title for this page</p>
+        {% endif %}
         <p>
-            {{ form }}
+            {{ form.name }}
         </p>
+        {% for error in form.name.errors %}
+            <p>{{ error }}</p>
+        {% endfor %}
         Enter the content in markdown here:
         <p>
-            <textarea name="content"></textarea>
+            <textarea name="content">
+                {{ content }}
+            </textarea>
         </p>
         <input type="submit", value="Add page">
     </form>
